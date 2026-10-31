@@ -1,0 +1,11 @@
+.agents
+.git
+.gitignore
+.vscode
+.idea
+data
+*.exe
+*.md
+Dockerfile
+.dockerignore
+

@@ -1,0 +1,6 @@
+# Pastas locais do projeto
+data/
+.agents/
+
+# Variáveis de ambiente
+.env
