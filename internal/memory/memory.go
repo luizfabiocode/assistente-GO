@@ -4,26 +4,39 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 )
 
 const (
-	dataDir     = "data"
+	usersDir    = "data/users"
 	memoryFile  = "MEMORY.md"
 	historyFile = "HISTORY.md"
 )
 
 func Init() error {
-	if err := os.MkdirAll(dataDir, 0755); err != nil {
-		return fmt.Errorf("erro ao criar diretório %s: %w", dataDir, err)
+	if err := os.MkdirAll(usersDir, 0755); err != nil {
+		return fmt.Errorf("erro ao criar diretório %s: %w", usersDir, err)
+	}
+	return nil
+}
+
+func userDirPath(chatID int64) string {
+	return filepath.Join(usersDir, strconv.FormatInt(chatID, 10))
+}
+
+func InitUser(chatID int64) error {
+	dir := userDirPath(chatID)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("erro ao criar diretório do usuário %s: %w", dir, err)
 	}
 
-	memPath := filepath.Join(dataDir, memoryFile)
+	memPath := filepath.Join(dir, memoryFile)
 	if err := ensureFile(memPath, "# Memória de Longo Prazo\n\n"); err != nil {
 		return err
 	}
 
-	histPath := filepath.Join(dataDir, historyFile)
+	histPath := filepath.Join(dir, historyFile)
 	if err := ensureFile(histPath, "# Histórico de Interações\n\n"); err != nil {
 		return err
 	}
@@ -45,8 +58,12 @@ func ensureFile(path string, defaultHeader string) error {
 	return nil
 }
 
-func ReadMemory() (string, error) {
-	memPath := filepath.Join(dataDir, memoryFile)
+func ReadMemory(chatID int64) (string, error) {
+	if err := InitUser(chatID); err != nil {
+		return "", err
+	}
+
+	memPath := filepath.Join(userDirPath(chatID), memoryFile)
 	data, err := os.ReadFile(memPath)
 	if err != nil {
 		return "", fmt.Errorf("erro ao ler arquivo %s: %w", memPath, err)
@@ -54,8 +71,12 @@ func ReadMemory() (string, error) {
 	return string(data), nil
 }
 
-func AppendHistory(event string) error {
-	histPath := filepath.Join(dataDir, historyFile)
+func AppendHistory(chatID int64, event string) error {
+	if err := InitUser(chatID); err != nil {
+		return err
+	}
+
+	histPath := filepath.Join(userDirPath(chatID), historyFile)
 	f, err := os.OpenFile(histPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return fmt.Errorf("erro ao abrir arquivo %s: %w", histPath, err)
@@ -71,4 +92,3 @@ func AppendHistory(event string) error {
 
 	return nil
 }
-
